@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+ 	<head>
+        <script src="jquery-3.2.1.min.js"></script>
+        <script type="text/javascript" src="boot/bootstrap.js"></script>
+		<link rel="stylesheet" type="text/css" href="boot/bootstrap.css">
+	   <meta charset="ISO-8859-1">
+	   <title>Subforum</title>
+    </head>
+	<body>
+		<nav class="navbar navbar-inverse">
+		  <div class="container-fluid">
+		    <div class="navbar-header" id="zaglavlje">
+				<a class="navbar-brand" href="../WebProjekat/Index.html"><span class="glyphicon glyphicon-home"></span> Home</a>
+		    </div>
+		    <div class="collapse navbar-collapse" id="myNavbar">
+		      <ul class="nav navbar-nav">
+		 
+		      </ul>
+		      <ul class="nav navbar-nav navbar-right">
+		      <li><form class="navbar-form">
+				      <div class="form-group">
+				        <input type="text" class="form-control" placeholder="Search">
+				      </div>
+				      <button type="submit" class="btn btn-info"><span class="glyphicon glyphicon-search"></span></button>
+				   </form></li>
+		        <li><button class="btn btn-link" onClick="logClick()" id ="isLogged" style="height: 50px;"></button></li>
+		      </ul>
+		    </div>
+		  </div>
+		</nav>
+		<div class="container-fluid" id="SviPodforumi">
+        	<div class="col-sm-2">
+            	<div class="panel panel-primary">
+	        		<div class="panel-heading">Subforums</div>
+	        		<div class="panel-body">
+	            		<ul id="tabelaPodforumi"></ul>
+	            	</div>
+	            </div>
+            </div>
+            <div class="col-sm-8">
+            	<table class="table table-bordred table-striped" style="border: 1px solid #ddd;" id="tabelaTeme"></table>
+            </div>
+             <div class="col-sm-2"  id="desniDeo">
+             	<div class="row"><button type="button" class="btn btn-success" id="subscribeBtn" style="display: none; margin-bottom: 5px; width: 100%;" onclick="subscribeClick()">Subscribe</button></div>
+            	<div class="row"><button type="button" class="btn btn-primary" id="newSubforum" style="display: none; margin-bottom: 5px; width: 100%;" onclick="javascript: location.href='../WebProjekat/NoviPodforum.html'">Create new subforum</button></div>
+            	<div class="row"><button type="button" class="btn btn-primary" id="newTopic" style="display: none; margin-bottom: 5px; width: 100%;" onclick="newTopicClick()">Create new topic</button></div>
+            	<div class="row"><button type="button" class="btn btn-link" id="reportSubforum" style="display: none; margin-bottom: 5px; width: 100%;" data-toggle="collapse" data-target="#reportForm">Report</button>
+            		<div class="collapse" id="reportForm"><label style="width: 100%;">Reason:</label>
+            		<textarea rows="4" cols="4" id="reportText" style="width: 100%;"></textarea>
+            		<button type="button" class="btn btn-default" onclick="sendReportClick()">Send report</button></div>
+            	</div>
+            	
+            </div>
+            
+            <script>
+          //da li je ulogovan ili ne
+        	var logged = 0;
+        	$.ajax({
+       				url: '../WebProjekat/rest/pocetna/isLogged',
+       	        	type: "GET",
+       	        	success: function(data){
+       	        		if(data==true){
+       	        			document.getElementById("isLogged").innerHTML = "Log Out";
+       	        			document.getElementById("reportSubforum").style.display = "initial";
+       	        			logged = 1;
+       	        		}else{
+       	        			document.getElementById("isLogged").innerHTML = "Log In";
+       	        			logged = 0;
+       	        		}
+       	        	}
+       	    	});
+        	
+        	function logClick(){
+        		if(logged == 0){
+        			window.location.href="../WebProjekat/LogIn.html";
+        		}else{
+        			$.ajax({
+           				url: '../WebProjekat/rest/pocetna/logOut',
+           	        	type: "POST",
+           	        	success: function(data){
+           	        		window.location.href="../WebProjekat/Index.html";
+           	        	}
+        			});
+        		}
+        	}
+        	
+        	function newTopicClick(){
+        		var pathname = window.location.href; 
+                var temp = pathname.split("=");
+        		window.location.href="../WebProjekat/NovaTema.html?name=" + temp[1];
+        	}
+        	
+        	//prikaz svih podforuma
+            $.ajax({
+               url: "../WebProjekat/rest/pocetna/sviPodforumi"
+               }).then(function(data){
+                  var a = document.getElementById("tabelaPodforumi");
+                 var i;
+                 for(i=0; i<data.length; i++){
+                      a.innerHTML += '<tr><td><a class="podforumTitle"' + 'href="../WebProjekat/Podforum.html?name=' + data[i].naziv + '">' + data[i].naziv + '</a><p class="opisPodforuma">' +
+                      data[i].opis + '</p></td></tr>';
+                }
+            });
+        	
+        	
+        	//podforum
+        	var pathname = window.location.href; 
+                var temp = pathname.split("=");
+        	$.ajax({
+               url: "../WebProjekat/rest/podforum/" + temp[1]
+               }).then(function(data){
+            	   if(data!=null){
+            		var a = document.getElementById("zaglavlje");
+            		a.innerHTML+='<font size="6" style="color: white;">' + data.naziv + '</font>'
+            	   	var b = document.getElementById("desniDeo");
+                   	b.innerHTML+='<div class="row"><img src="' + data.ikonica + '" style="width: 100%;"/><div class="row">';
+                   	b.innerHTML+='<div class="row"><h3>About</h3></div>' +
+                   	'<div class="row"><p style="width: 100%; margin-bottom: 10px;">' + data.opis + '</p></div>';
+                   	b.innerHTML+='<div class="row"><h3>Rules</h3></div>' +
+                   	'<div class="row"><p style="width: 100%;">' + data.spisakpravila + '</p></div>';
+            	   }
+               });
+        	
+          //prikaz tema
+          var pathname = window.location.href; 
+          var temp = pathname.split("=");
+            $.ajax({
+               url: "../WebProjekat/rest/podforum/teme/" + temp[1]
+               }).then(function(data){
+            	   if(data==null){
+            		   alert("This subforum does not exist.")
+            		   window.location.href="../WebProjekat/Index.html";
+            	   }
+                  var a = document.getElementById("tabelaTeme");
+                  var i;
+                 for(i=0; i<data.length; i++){
+                      a.innerHTML += '<tr><td colspan="5"><a class="TemaTitle"' + 'href="../WebProjekat/Tema.html?pf=' + data[i].podforum + '&name=' + data[i].naslov + '">' + data[i].naslov + '</a></td></tr><tr><td>' +
+                      data[i].autor + '</td><td>' + data[i].komentari.length  + ' comments ' +
+                      '</td><td><button onclick="like(\'' + data[i].podforum + '\',\'' + data[i].naslov +'\')">+</button></td><td name="' + data[i].podforum + '&' + data[i].naslov + '">' + (data[i].like - data[i].dislike) + 
+                      '</td><td><button onclick="dislike(\'' + data[i].podforum + '\',\'' + data[i].naslov +'\')">-</button></td></tr>';
+                }
+            });
+          
+          //lajk na temu
+        	function like(pf, tema){
+        		
+        		var t = new Object();
+        		t.naslov = tema;
+        		t.podforum = pf;
+        		
+        		$.ajax({
+       				url: '../WebProjekat/rest/pocetna/upvote',
+       	        	type: "POST",
+       	        	data: JSON.stringify(t),
+       	        	contentType: "application/json",
+       	        	success: function(data){
+						document.getElementsByName(pf + '&' + tema)[0].innerHTML = data;
+       	        			}
+       	    	});
+        	}
+        	
+        	//dislajk na temu
+        	function dislike(pf, tema){
+        		
+        		var t = new Object();
+        		t.naslov = tema;
+        		t.podforum = pf;
+        		
+        		$.ajax({
+       				url: '../WebProjekat/rest/pocetna/downvote',
+       	        	type: "POST",
+       	        	data: JSON.stringify(t),
+       	        	contentType: "application/json",
+       	        	success: function(data){
+						document.getElementsByName(pf + '&' + tema)[0].innerHTML = data;
+       	        			}
+       	    	});
+        	}
+        	
+        	//ako je korisnik moderator ili admin, prikazi dugme za novi podforum
+        	//ako je korisnik ulogovan prikazi dugme za novu temu
+        	$.ajax({
+       				url: '../WebProjekat/rest/pocetna/userType',
+       	        	
+        	}).then(function(data){
+	        		if(data==3 || data==2){
+	        			document.getElementById('newSubforum').style.display = "initial";
+	        		}else{
+	        			document.getElementById('newSubforum').style.display = "none";
+	        		}
+	        		if(data==3 || data==2 || data==1){
+						document.getElementById('newTopic').style.display = "initial";
+						document.getElementById('subscribeBtn').style.display = "initial";
+					}else{
+						document.getElementById('newTopic').style.display = "none";
+						document.getElementById('subscribeBtn').style.display = "none";
+					}
+       	    	});
+        	
+        	function subscribeClick(){
+        		var pathname = window.location.href; 
+                var temp = pathname.split("=");
+        		$.ajax({
+       				url: '../WebProjekat/rest/podforum/zaprati/' + temp[1],
+        		}).then(function(data){
+        			if(data==0){
+        				window.location.href="../WebProjekat/LogIn.html";
+        			}else if(data==1){
+        				alert("You are already subscribed to this subforum");
+        			}else if(data==2){
+        				alert("You have successfully subscribed");
+        			}
+        		});
+        	}
+        	
+        	//dugme za brisanje podforuma
+       		var pathname = window.location.href; 
+            var temp = pathname.split("=");
+        	$.ajax({
+   				url: '../WebProjekat/rest/podforum/smeObrisati/' + temp[1],
+   	        	success: function(data){
+   	        		if(data==true){
+   	        			document.getElementById("desniDeo").innerHTML+='<div class="row"><button type="button" class="btn btn-danger" id="deleteSubforum" style=" margin-bottom: 5px; width: 100%;" onclick="deleteSubClick()"><span class="glyphicon glyphicon-trash"></span>Delete this subforum</button></div>';
+   	        		}
+     	        }
+       	    });
+        	
+        	function deleteSubClick(){
+        		$.ajax({
+       				url: '../WebProjekat/rest/podforum/obrisi/' + temp[1],
+       	        	type: "DELETE",
+       	        	success: function(data){
+       	        		window.location.href="../WebProjekat/Index.html";
+       	        	}
+       	    	});
+        	}
+        	
+        	//zalba na podforum
+        	function sendReportClick(){
+        		var tekstZalbe = document.getElementById("reportText").value;
+        		if(tekstZalbe.trim() == ""){
+        			alert("Please fill out your report!");
+        			return false;
+        		}
+        		
+        		var zalba = new Object();
+        		zalba.tekst = tekstZalbe;
+        		zalba.podforum = temp[1];
+        		
+        		$.ajax({
+        			url: '../WebProjekat/rest/zalbe/podforumZalba',
+        			type: "POST",
+        			data: JSON.stringify(zalba),
+        			contentType: "application/json",
+        			success: function(data){
+        				if(data == false){
+        					alert("Report not sent!");
+        				}else{
+        					alert("Report sent!");
+        				}
+        			}
+        		});
+        	}
+            </script>
+        </div>
+	</body>
+</html>

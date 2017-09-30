@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="jquery-3.2.1.min.js"></script>
+    <script type="text/javascript" src="boot/bootstrap.js"></script>
+	<link rel="stylesheet" type="text/css" href="boot/bootstrap.css">
+   	<meta charset="ISO-8859-1">
+	<title>Log In</title>
+</head>
+<body>
+
+	<script>
+    	$.ajax({
+				url: '../WebProjekat/rest/pocetna/userType',
+	        	
+		}).then(function(data){
+	        if(data!=0){
+	        	window.location.href="../WebProjekat/Index.html"
+	        }
+	    });
+    </script>
+     <nav class="navbar navbar-inverse">
+		  <div class="container-fluid">
+		    <div class="navbar-header">
+		    	<a class="navbar-brand" href="../WebProjekat/Index.html"><span class="glyphicon glyphicon-home"></span> Home</a>
+		    </div>
+		    <div class="collapse navbar-collapse" id="myNavbar">
+		      <ul class="nav navbar-nav">
+		 			
+		      </ul>
+		      <ul class="nav navbar-nav navbar-right">
+		      </ul>
+		    </div>
+		  </div>
+		</nav>
+	<div class="row">
+	  <div class="col-sm-3"></div>
+	  <div class="col-sm-6">
+	  	<h2>Log In</h2>
+	  </div>
+	  <div class="col-sm-3"></div>
+	</div>
+    <div class="row">
+	  <div class="col-sm-3"></div>
+	  <div class="col-sm-6">
+	  	<form id="form">
+			<div class="input-group">
+			    <span class="input-group-addon"><i class="glyphicon glyphicon-user"></i> username:</span>
+			    <input id="username" type="text" class="form-control" name="email" placeholder="Email">
+			</div>
+			<div class="input-group" style="margin-top: 10px; margin-bottom: 10px;">
+			    <span class="input-group-addon"><i class="glyphicon glyphicon-lock"></i> password: </span>
+			    <input id="password" type="password" class="form-control" name="password" placeholder="Password">
+		    </div>
+		    <div class="input-group" style="width: 100%;">
+		    	<input type="submit" class="btn btn-primary" id="login" style="width: 100%;" value="Login"/>
+			</div>
+			<div class="input-group" style="width: 100%; text-align: center;">
+		    	<input type="button" class="btn btn-link" id="register" value="Register" >
+			</div>
+		</form>
+	  </div>
+	  <div class="col-sm-3"></div>
+	</div>
+
+	
+	<script>
+		$(document).ready(function(){
+			$(document).on('submit', '#form', function(e) {
+				e.preventDefault();
+				var username=document.getElementById("username").value;
+				var password=document.getElementById("password").value;
+				if(username.trim()=="" || password.trim()==""){
+					alert("You have not entered all fields.");
+       		 		return false;
+       		 	}
+				
+				var user = new Object();
+				user.korisnicko=username;
+				user.lozinka=password;
+				$.ajax({
+       				url: '../WebProjekat/rest/logIn/log',
+       	        	type: "POST",
+       	        	data: JSON.stringify(user),
+       	        	contentType: "application/json",
+       	        	success: function(data){
+       	   		  				if(data == true){
+       	   		  					window.location.href="../WebProjekat/Index.html";
+				       			}else{
+				       				alert("Wrong username and/or password.");
+				       			}
+       	        			}
+       	    	});
+    		});
+			$(document).on('click', '#register', function(e) {
+				window.location.href="../WebProjekat/Registracija.html";
+			});
+		});
+	</script>
+	
+</body>
+</html>

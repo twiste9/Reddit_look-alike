@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script src="jquery-3.2.1.min.js"></script>
+	<meta charset="ISO-8859-1">
+	<script type="text/javascript" src="boot/bootstrap.js"></script>
+	<link rel="stylesheet" type="text/css" href="boot/bootstrap.css">
+	<title>Create new Topic</title>
+</head>
+    <body>
+    	<script>
+    	$.ajax({
+				url: '../WebProjekat/rest/pocetna/userType',
+	        	
+		}).then(function(data){
+	        if(data==0){
+	        	window.location.href="../WebProjekat/Index.html";
+	        }
+	    });
+    	
+    	</script>
+          <nav class="navbar navbar-inverse">
+		  <div class="container-fluid">
+		    <div class="navbar-header">
+		    	<a class="navbar-brand" href="../WebProjekat/Index.html"><span class="glyphicon glyphicon-home"></span> Home</a>
+		    </div>
+		    <div class="collapse navbar-collapse" id="myNavbar">
+		      <ul class="nav navbar-nav">
+		 
+		      </ul>
+		      <ul class="nav navbar-nav navbar-right">
+		        <li><button class="btn btn-link" onClick="signOutClick()" style="height: 50px;">Log Out</button></li>
+		      </ul>
+		    </div>
+		  </div>
+		</nav>
+		<div class="row">
+ 			<div class="col-sm-4"></div>
+  			<div class="col-sm-4">
+  				<h2>Create New Topic</h2>
+  			</div>
+	 	<div class="col-sm-4"></div>
+		</div>
+        <div class="row">
+  			<div class="col-sm-4"></div>
+
+        	<div class="container col-sm-4">
+         	   <form id="form" >
+                <table class="table table-hover" style="width: 450px;">
+                    <tr><td>Title:</td><td ><input type="text" class="forma" id="name" style="width: 255px;"/></td></tr>
+                    <tr><td>Type:</td><td>
+                        <select id="types" class="forma" onchange="promenaTipa()" style="width: 255px;">
+                          <option disabled selected></option>
+                          <option value="picture">Picture</option>
+                          <option value="link">Link</option>
+                          <option value="text">Text</option>
+                        </select>
+                    </td></tr>
+                    <tr><td id="contentText"></td><td id="contentType"></td></tr>
+                    <tr><td></td><td><input type="submit" class="btn btn-primary btn-md" value="Create" id="createButton"   style="width: 255px;"></td></tr>
+                </table>
+            </form>
+        	</div>	
+        	<div class="col-sm-4"></div>
+        </div>
+        
+        
+        	<script>
+
+        	
+        	
+           	   
+        	
+               //log out
+               function signOutClick(){
+               		$.ajax({
+               		url: '../WebProjekat/rest/pocetna/logOut',
+               	    type: "POST",
+               	    success: function(data){
+               	    	window.location.href="../WebProjekat/Index.html";
+               	    	}
+            		});
+            	}
+               
+               var tipTeme = "nista";
+               
+               function promenaTipa(){
+            	   var tip = $("#types option:selected").text();
+            	   if(tip==="Picture"){
+            		   document.getElementById("contentText").innerHTML = "Picture:";
+            		   document.getElementById("contentType").innerHTML = "<input type=\"file\" accept=\"image/\*\" id=\"iconPath\">";
+            		   tipTeme = "slika";
+            	   }else if(tip==="Text"){
+            		   document.getElementById("contentText").innerHTML = "Text:";
+            		   document.getElementById("contentType").innerHTML = "<input type=\"text\" id=\"text\" style=\"width: 255px;\">";
+            		   tipTeme = "text";
+            	   }else{
+            		   document.getElementById("contentText").innerHTML = "Link:";
+            		   document.getElementById("contentType").innerHTML = "<input type=\"text\" id=\"text\" style=\"width: 255px;\">";
+            		   tipTeme = "link";
+            	   }
+               }
+                   
+                //kad klikne kreiraj temu
+                $(document).on('submit', '#form', function(e) {
+        		e.preventDefault();
+                    var name=document.getElementById("name").value;
+                    //var iconPath=document.getElementById("iconPath").value;
+                    var sadrzaj;
+
+                	 if(tipTeme==="nista"){
+                		 alert("You have not selected a type.");
+                		 return false;
+                	 }else if(tipTeme==="slika"){
+   	                    var objFile = $('#iconPath');
+  	               	 	if(objFile[0].files[0]==null ){
+   	               			alert("Choose an icon");
+   	               			return false;
+   	               	 	}else{
+   	               	 		sadrzaj=objFile[0].files[0].name;
+   	               	 	}
+                     }else{
+                    	 var text=document.getElementById("text").value;
+                    	 if(text.trim()==""){
+                    		 alert("You have not entered a link/text");
+                    		 return false;
+                    	 }else{
+                    		 sadrzaj = text;
+                    	 }
+                     }
+                	 
+                    if(name.trim()==""){
+	       				alert("You have not entered a title");
+   		 		        return false;
+      		 	     }
+                   
+                     //kreiraj temu
+                       var tema = new Object();
+                       tema.naslov = name;
+                       tema.sadrzaj = sadrzaj;
+                       tema.tip = tipTeme;
+                       
+                       var pathname = window.location.href; 
+                       var temp = pathname.split("=");
+                       
+                       tema.podforum = temp[1];
+                       
+                       $.ajax({
+                      		url: '../WebProjekat/rest/podforum/tema/dodaj',
+                      	    type: "POST",
+                      	 	data: JSON.stringify(tema),
+             	        	contentType: "application/json",
+                      	    success: function(data){
+                      	    	if(data==0){
+                      	    		window.location.href="../WebProjekat/Index.html";
+                      	    	}else if(data==1){
+                      	    		alert("Please enter all fields.");
+                      	    	}else if(data==2){
+                      	    		
+                      	    		if(tema.tip==="slika"){
+                      	    			var objFile = $('#iconPath');
+                      	    			var file = objFile[0].files[0];
+                      	    			$.ajax({
+    	                      	  			async : false,
+    	                      	  			type : "POST",
+    	                      	  			url : "../WebProjekat/rest/podforum/tema/dodajSliku/" + tema.podforum + '/' + tema.naslov,
+    	                      	  	        contentType : "multipart/form-data",
+    	                      	  	        data: file,
+    	                      	  	        processData: false,
+    	                      	  		});
+                      	    		}
+                      	    		
+                      	    		alert("You have successfully created a new topic.");
+                          	    	window.location.href="../WebProjekat/Podforum.html?name=" + temp[1];
+                      	    	}else if(data==3){
+                      	    		window.location.href="../WebProjekat/Index.html";
+                      	    	}else{
+                      	    		alert("Topic title already exists");
+                      	    	}
+                      	    }
+                   		});
+                   });
+                    
+                    
+                   /* 
+                    //kad pokusa submit
+                    $(document).on('submit', '#form', function(e) {
+				        e.preventDefault();
+                        var name=document.getElementById("name").value;
+				        var about=document.getElementById("about").value;
+				        var rules=document.getElementById("rules").value;
+                        var iconPath=document.getElementById("iconPath").value;
+				
+                        if(name.trim()=="" || about.trim()=="" || rules.trim()=="" || iconPath.trim()==""){
+					       alert("You have not entered all fields.");
+       		 		        return false;
+       		 	         }
+                        
+                        //kreiraj podforum
+                        var podforum = new Object();
+                        podforum.naziv = name;
+                        podforum.opis = about;
+                        podforum.spisakPravila = rules;
+                        podforum.ikonica = iconPath;
+                        
+                        $.ajax({
+	       				url: 'http://localhost:8080/App/App/addSubreddit',
+	       	        	type: "POST",
+	       	        	data: JSON.stringify(podforum),
+	       	        	contentType: "application/json",
+	       	        	success: function(data){
+	       	   		  				if(data != false){
+					       	   		  	window.location.href="http://localhost:8080/App/App/index.html";
+			       	   		  		}else{
+					       				alert('Subreddit already exists!');
+					       			}
+	       	        			}
+	       	    	});
+                        
+                    });
+                    
+                    
+                	$.ajax({
+                        url: "http://localhost:8080/App/App/LoggedUser"
+                    }).then(function(data) {
+                    	if(data != ""){
+                    		document.getElementsByClassName('topMenu')[0].innerHTML = '<div class="topMenuChilds"><a href="http://localhost:8080/App/App/userPage.html">' + data.username + ' </a></div>' +
+                            '<div class="topMenuChilds"> or <button  id="signOut" onclick="signOutClick()">Sign Out</button></div>';
+                      
+                            
+                    	}else{
+                            window.location.href="http://localhost:8080/App/App/LogIn.html";
+                    	}
+                    });
+                });
+                //---------------------------------------------------
+                */
+	       </script>
+        
+        
+        
+    </body>
+</html>

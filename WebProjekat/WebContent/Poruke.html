@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script src="jquery-3.2.1.min.js"></script>
+    <script type="text/javascript" src="boot/bootstrap.js"></script>
+	<link rel="stylesheet" type="text/css" href="boot/bootstrap.css">
+    <meta charset="ISO-8859-1">
+    <title>Messages</title>
+</head>
+<body>
+	<nav class="navbar navbar-inverse">
+	  <div class="container-fluid">
+	    <div class="navbar-header">
+	    	<a class="navbar-brand" href="../WebProjekat/Index.html"><span class="glyphicon glyphicon-home"></span> Home</a>
+	    </div>
+	    <div class="collapse navbar-collapse" id="myNavbar">
+	      <ul class="nav navbar-nav">
+	 			
+	      </ul>
+	      <ul class="nav navbar-nav navbar-right">
+		      <li><form class="navbar-form">
+			      <div class="form-group">
+			        <input type="text" class="form-control" placeholder="Search">
+			      </div>
+			      <button type="submit" class="btn btn-default"><span class="glyphicon glyphicon-search"></span></button>
+			   		<a href="../WebProjekat/Poruke.html" class="btn btn-info" id="messageBtn" style="display: none; margin-left: 10px;">
+         				<span class="glyphicon glyphicon-envelope"></span> Messages 
+       			</a>
+			   </form></li>
+			   <li></li>
+	        <li><button class="btn btn-link" onClick="logClick()" id ="isLogged" style="height: 50px;"></button></li>
+	      	
+	      	</ul>
+	    </div>
+	  </div>
+	</nav>
+	 <div class="container-fluid">
+	 	<div class="col-sm-4">
+	 		<h2>New Message</h2>
+	 		<form id="newMessageForm">
+			  <div class="form-group">
+			    <label>Send to:</label>
+			    <input type="text" class="form-control" id="receiver">
+			  </div>
+			  <div class="form-group">
+			    <label >Message:</label>
+			    <textarea  rows="5" form="newMessageForm" style="width: 100%;" id="messageText"></textarea>
+			  </div>
+			  <button type="submit" class="btn btn-default">Send</button>
+			</form>
+	 	</div>
+	 	<div class="col-sm-8">
+	 		 <ul class="nav nav-tabs">
+			    <li class="active"><a data-toggle="tab" href="#receivedTab">Recieved</a></li>
+			    <li><a data-toggle="tab" href="#sentTab">Sent</a></li>
+			 </ul>
+			 <div class="tab-content">
+			 	<div id="receivedTab" class="tab-pane fade in active">
+			 		<table class="table table-hover" id="receivedTable">
+					    <thead>
+					      <tr>
+					        <th>From</th>
+					        <th>Message</th>
+					      </tr>
+					    </thead>
+					</table>
+			 	</div>
+			 	<div id="sentTab" class="tab-pane fade">
+			 		<table class="table table-hover" id="sentTable">
+					    <thead>
+					      <tr>
+					        <th>To</th>
+					        <th>Message</th>
+					        <th>Seen</th>
+					      </tr>
+					    </thead>
+					</table>
+			 	</div>
+			 </div>
+	 	</div>
+	 </div>
+	
+	
+	<script>
+	//da li je ulogovan ili ne
+		$.ajax({
+			url: '../WebProjekat/rest/pocetna/isLogged',
+        	type: "GET",
+        	success: function(data){
+        		if(data==true){
+        			document.getElementById("isLogged").innerHTML = "Log Out";
+        			document.getElementById("messageBtn").style.display = "initial";
+        		}else{
+        			window.location.href="../WebProjekat/LogIn.html";
+        		}
+        	}
+    	});
+	
+	
+		function logClick(){
+			$.ajax({
+   				url: '../WebProjekat/rest/pocetna/logOut',
+   	        	type: "POST",
+   	        	success: function(data){
+   	        		window.location.href="../WebProjekat/LogIn.html";
+   	        	}
+			});
+		}
+		
+		
+		//poslaji poruku
+		$(document).on('submit', '#newMessageForm', function(e) {
+			e.preventDefault();
+			var primalac = document.getElementById("receiver").value;
+			var sadrzaj = document.getElementById("messageText").value;
+			
+			if(primalac.trim()=="" || sadrzaj.trim()==""){
+				alert("Please fill the receiver and message box before sending.");
+				return false;
+			}
+			
+			var poruka = new Object();
+			poruka.primalac = primalac;
+			poruka.sadrzaj = sadrzaj;
+			
+			$.ajax({
+				url: '../WebProjekat/rest/korisnicka/posaljiPoruku',
+				type: "POST",
+				data: JSON.stringify(poruka),
+   	        	contentType: "application/json",
+   	        	success: function(data){
+   	        		if(data==-1)
+   	        			window.location.href="../WebProjekat/LogIn.html";
+   	        		else if(data==0)
+   	        			alert("Entered user does not exist");
+   	        		else if(data==1)
+   	        			alert("Please fill out the message box")
+   	        		else if(data==2){
+   	        			alert("Message sent!");
+   	        			window.location.href="../WebProjekat/Poruke.html";
+   	        		}
+   	        	}
+			});
+		});
+		
+		//primljene
+		$.ajax({
+			url: '../WebProjekat/rest/korisnicka/primljenePoruke',
+			success: function(data){
+				if(data==null){
+					window.location.href="../WebProjekat/LogIn.html";
+				}else{
+					var a = document.getElementById("receivedTable");
+					var i;
+					for(i=0; i<data.length; i++){
+						a.innerHTML += '<tr><td>' + data[i].posaljilac + '</td><td>' + data[i].sadrzaj + '</td></tr>';
+					}
+					$.ajax({
+						url: '../WebProjekat/rest/korisnicka/procitane',
+						type: "PUT"
+					});
+				}
+			}
+		});
+		
+		//posljate
+		$.ajax({
+			url: '../WebProjekat/rest/korisnicka/poslatePoruke',
+			success: function(data){
+				if(data==null){
+					window.location.href="../WebProjekat/LogIn.html";
+				}else{
+					var a = document.getElementById("sentTable");
+					var i;
+					for(i=0; i<data.length; i++){
+						//a.innerHTML += '<tr><td>' + data[i].primalac + '</td><td>' + data[i].sadrzaj + '</td>';
+						if(data[i].procitana == false){
+							a.innerHTML +='<tr><td>' + data[i].primalac + '</td><td>' + data[i].sadrzaj + '</td><td>No</td></tr>'
+						}else{
+							a.innerHTML +='<tr><td>' + data[i].primalac + '</td><td>' + data[i].sadrzaj + '</td><td>Yes</td></tr>'
+						}
+					}
+				}
+			}
+		});
+		
+	</script>
+</body>
+</html>

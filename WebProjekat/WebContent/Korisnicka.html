@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script src="jquery-3.2.1.min.js"></script>
+    <script type="text/javascript" src="boot/bootstrap.js"></script>
+	<link rel="stylesheet" type="text/css" href="boot/bootstrap.css">
+	<meta charset="ISO-8859-1">
+	<title>User Page</title>
+</head>
+<body>
+    <nav class="navbar navbar-inverse">
+	  <div class="container-fluid">
+	    <div class="navbar-header">
+	    	<a class="navbar-brand" href="../WebProjekat/Index.html"><span class="glyphicon glyphicon-home"></span> Home</a>
+	    </div>
+	    <div class="collapse navbar-collapse" id="myNavbar">
+	      <ul class="nav navbar-nav">
+	 			
+	      </ul>
+	      <ul class="nav navbar-nav navbar-right">
+		      <li><form class="navbar-form" id="searchForm">
+			      <div class="form-group">
+			        <input type="text" class="form-control" placeholder="Search" id="searchText">
+			      </div>
+			      <button type="submit" class="btn btn-default"><span class="glyphicon glyphicon-search"></span></button>
+			   		<a href="../WebProjekat/Poruke.html" class="btn btn-info" id="messageBtn" style="display: none; margin-left: 10px;">
+         				<span class="glyphicon glyphicon-envelope"></span> Messages 
+       			</a>
+			   </form></li>
+			   <li></li>
+	        <li><button class="btn btn-link" onClick="logClick()" id ="isLogged" style="height: 50px;"></button></li>
+	      	
+	      	</ul>
+	    </div>
+	  </div>
+	</nav>
+	<div class="row">
+	  <div class="col-sm-2"></div>
+	  <div class="col-sm-8">
+	  	<h2 id="usernameHeader"></h2>
+	  </div>
+	  <div class="col-sm-2"></div>
+	</div>
+	<div class="row">
+	  <div class="col-sm-2"></div>
+	  <div class="col-sm-8">
+		  <ul class="nav nav-tabs" id="tabovi">
+		    <li class="active"><a data-toggle="tab" href="#subscirbed">Subscirbed</a></li>
+		    <li><a data-toggle="tab" href="#saved">Saved</a></li>
+		    <li><a data-toggle="tab" href="#liked">Liked</a></li>
+		    <li><a data-toggle="tab" href="#disliked">Disliked</a></li>
+		  </ul>
+		  <div class="tab-content" id="sadrzajTabova">
+		  	<div id="subscirbed" class="tab-pane fade in active list-group">
+      		</div>
+      		<div id="saved" class="tab-pane fade">
+      			<div class="row">
+	      			<button type="button" class="btn btn-info" data-toggle="collapse" data-target="#savedTopics" style="width: 100%; margin-bottom: 20px;">Saved Topics</button>
+					<div id="savedTopics" class="collapse list-group in">
+					</div>
+				</div>
+      			<div class="row">
+	      			<button type="button" class="btn btn-info" data-toggle="collapse" data-target="#savedComments" style="width: 100%; margin-bottom: 20px;">Saved Comments</button>
+					<div id="savedComments" class="collapse list-group in">
+					</div>
+				</div>				
+      		</div>
+      		<div id="liked" class="tab-pane fade">
+      			<div class="row">
+	      			<button type="button" class="btn btn-info" data-toggle="collapse" data-target="#likedTopics" style="width: 100%; margin-bottom: 20px;">Liked Topics</button>
+					<div id="likedTopics" class="collapse list-group in">
+					</div>
+				</div>
+      			<div class="row">
+	      			<button type="button" class="btn btn-info" data-toggle="collapse" data-target="#likedComments" style="width: 100%; margin-bottom: 20px;">Liked Comments</button>
+					<div id="likedComments" class="collapse list-group in">
+					</div>
+				</div>			
+      		</div>
+      		<div id="disliked" class="tab-pane fade">
+      			<div class="row">
+	      			<button type="button" class="btn btn-info" data-toggle="collapse" data-target="#dislikedTopics" style="width: 100%; margin-bottom: 20px;">Disiked Topics</button>
+					<div id="dislikedTopics" class="collapse list-group in">
+					</div>
+				</div>
+      			<div class="row">
+	      			<button type="button" class="btn btn-info" data-toggle="collapse" data-target="#dislikedComments" style="width: 100%; margin-bottom: 20px;">Disiked Comments</button>
+					<div id="dislikedComments" class="collapse list-group in">
+					</div>
+				</div>
+      		</div>
+		  </div>
+	  </div>
+	  <div class="col-sm-2"></div>
+	</div>
+	<script>
+	//da li je ulogovan ili ne
+	var logged = 0;
+	$.ajax({
+		url: '../WebProjekat/rest/pocetna/isLogged',
+       	type: "GET",
+       	success: function(data){
+       		if(data==true){
+       			document.getElementById("isLogged").innerHTML = "Log Out";
+       			document.getElementById("messageBtn").style.display = "initial";
+       			logged = 1;
+       		}else{
+       			window.location.href = '../WebProjekat/LogIn.html';
+       		}
+       	}
+   	});
+
+	function logClick(){
+		if(logged == 0){
+			window.location.href="../WebProjekat/LogIn.html";
+		}else{
+			$.ajax({
+   				url: '../WebProjekat/rest/pocetna/logOut',
+   	        	type: "POST",
+   	        	success: function(data){
+   	        		window.location.href="../WebProjekat/Index.html";
+   	        	}
+			});
+		}
+	}	
+	
+	//search form
+	$(document).on('submit', '#searchForm', function(e) {
+		e.preventDefault();
+		var text = document.getElementById("searchText").value;
+		if(text.trim()==""){
+			alert("Please enter some text in the search box!");
+			return false;
+		}else{
+			window.location.href = '../WebProjekat/Pretraga.html?text=' + text;
+		}
+		
+	});
+	
+	//korisnik, podforumi koje prati, sacuvane teme i komentari
+	$.ajax({
+		url: '../WebProjekat/rest/korisnicka/korisnik',
+		success: function(data){
+			if(data == null){
+				window.location.href = "../WebProjekat/LogIn.html";
+			}else{
+				document.getElementById("usernameHeader").innerHTML = data.korisnicko;
+				//podforumi koje prati
+				var a = document.getElementById("subscirbed");
+				var i;
+				for(i=0; i<data.forumi.length; i++){
+					a.innerHTML += '<a href="../WebProjekat/Podforum.html?name=' + data.forumi[i].naziv + '" class="list-group-item"><h4 class="list-group-item-heading">'
+					+ data.forumi[i].naziv + '</h4><p class="list-group-item-text">' + data.forumi[i].opis + '</p></a>';
+				}
+				
+				//sacuvane teme
+				var b = document.getElementById("savedTopics");
+				for(i=0; i<data.teme.length; i++){
+					b.innerHTML += '<a href="../WebProjekat/Tema.html?pf=' + data.teme[i].podforum + '&name=' + data.teme[i].naslov + '" class="list-group-item"><h4 class="list-group-item-heading">'
+							+ data.teme[i].naslov + '</h4><p class="list-group-item-text">By '+ data.teme[i].autor + ' in ' + data.teme[i].podforum + '</p></a>';
+				}
+				//sacuvani komentari
+				var c = document.getElementById("savedComments");
+				for(i=0; i<data.komentari.length; i++){
+					c.innerHTML += '<a href="../WebProjekat/Tema.html?pf=' + data.komentari[i].podforum + '&name=' + data.komentari[i].tema + '" class="list-group-item"><h5 class="list-group-item-heading">'
+							+ data.komentari[i].tekst + '</h5><p class="list-group-item-text">By '+ data.komentari[i].autor + ' in ' + data.komentari[i].podforum + '</p></a>';
+				}
+				
+				//lajkovani komentari
+				var lk = document.getElementById("likedComments");
+				for(i=0; i<data.lajkovaniKomentari.length; i++){
+					lk.innerHTML += '<a href="../WebProjekat/Tema.html?pf=' + data.lajkovaniKomentari[i].podforum + '&name=' + data.lajkovaniKomentari[i].tema + '" class="list-group-item"><h5 class="list-group-item-heading">'
+							+ data.lajkovaniKomentari[i].tekst + '</h5><p class="list-group-item-text">By '+ data.lajkovaniKomentari[i].autor + ' in ' + data.lajkovaniKomentari[i].podforum + '</p></a>';
+				}
+				
+				//dislajkovani komentari
+				var dk = document.getElementById("dislikedComments");
+				for(i=0; i<data.dislajkovaniKomentari.length; i++){
+					dk.innerHTML += '<a href="../WebProjekat/Tema.html?pf=' + data.dislajkovaniKomentari[i].podforum + '&name=' + data.dislajkovaniKomentari[i].tema + '" class="list-group-item"><h5 class="list-group-item-heading">'
+							+ data.dislajkovaniKomentari[i].tekst + '</h5><p class="list-group-item-text">By '+ data.dislajkovaniKomentari[i].autor + ' in ' + data.dislajkovaniKomentari[i].podforum + '</p></a>';
+				}
+				
+				//zalbe
+				if(data.zalbe.length>0){
+					var z = document.getElementById("tabovi");
+					z.innerHTML += '<li><a data-toggle="tab" href="#reports">Reports</a></li>';
+					var r = document.getElementById("sadrzajTabova");
+					r.innerHTML += '<div id="reports" class="tab-pane fade list-group"></div>';
+					var rr = document.getElementById("reports");
+					for(i=0; i<data.zalbe.length; i++){
+						if(data.zalbe[i].resena == false){
+							if(data.zalbe[i].podforum != null && data.zalbe[i].tema==null && data.zalbe[i].komentar==-2){
+								rr.innerHTML += '<div class="well"><p><b>Subforum reported:</b> <a href="../WebProjekat/Podforum.html?name=' + data.zalbe[i].podforum + '">' + data.zalbe[i].podforum + '</a></p>' +
+										'<b>Reason: </b>' + data.zalbe[i].tekst  + 
+										'</br><b>Reported by</b> ' + data.zalbe[i].autor  +
+										'</br><b>Decision: </b><button type="button" class="btn btn-danger" onclick="deleteDecision(' + i + ')">Delete subforum</button>' + 
+										'<button type="button" class="btn btn-warning" style="margin-left: 10px; margin-right: 10px;" onclick="warningDecision(' + i + ')">Send warning</button>' + 
+										'<button type="button" class="btn btn-default" onclick="rejectDecision(' + i + ')">Reject</button></div>';
+								
+							}else if(data.zalbe[i].podforum != null && data.zalbe[i].tema!=null && data.zalbe[i].komentar==-2){
+								rr.innerHTML += '<div class="well"><p><b>Topic reported:</b> <a href="../WebProjekat/Tema.html?pf=' + data.zalbe[i].podforum + '&name=' + data.zalbe[i].tema + '">' + data.zalbe[i].podforum + '</a></p>' +
+								'<b>Reason: </b>' + data.zalbe[i].tekst  + 
+								'</br><b>Reported by</b> ' + data.zalbe[i].autor  +
+								'</br><b>Decision: </b><button type="button" class="btn btn-danger" onclick="deleteDecision(' + i + ')">Delete topic</button>' + 
+								'<button type="button" class="btn btn-warning" style="margin-left: 10px; margin-right: 10px;" onclick="warningDecision(' + i + ')">Send warning</button>' + 
+								'<button type="button" class="btn btn-default" onclick="rejectDecision(' + i + ')">Reject</button></div>';
+						
+							}else if(data.zalbe[i].podforum != null && data.zalbe[i].tema!=null && data.zalbe[i].komentar!=-2){
+								rr.innerHTML += '<div class="well"><p><b>Comment reported:</b> ' + data.zalbe[i].komentarTekst + ', in <a href="../WebProjekat/Tema.html?pf=' + data.zalbe[i].podforum + '&name=' + data.zalbe[i].tema + '">' + data.zalbe[i].podforum + '</a></p>' +
+								'<b>Reason: </b>' + data.zalbe[i].tekst  + 
+								'</br><b>Reported by</b> ' + data.zalbe[i].autor  +
+								'</br><b>Decision: </b><button type="button" class="btn btn-danger" onclick="deleteDecision(' + i + ')">Delete comment</button>' + 
+								'<button type="button" class="btn btn-warning" style="margin-left: 10px; margin-right: 10px;" onclick="warningDecision(' + i + ')">Send warning</button>' + 
+								'<button type="button" class="btn btn-default" onclick="rejectDecision(' + i + ')">Reject</button></div>';
+							}
+						}
+					}
+				}
+				
+				//promena tipa korisnika
+				if(data.uloga == "administrator"){
+					var z = document.getElementById("tabovi");
+					z.innerHTML += '<li><a data-toggle="tab" href="#userType">User Type</a></li>';
+					var r = document.getElementById("sadrzajTabova");
+					r.innerHTML += '<div id="userType" class="tab-pane fade list-group"></div>';
+					var rr = document.getElementById("userType");
+					rr.innerHTML = '<div class="well">User: <input type="text" id="userForEdit"/>' + 
+					'<button type="button" class="btn btn-primary" onclick="changeUserType(1)">Regular</button>' +
+					'<button type="button" class="btn btn-primary"  onclick="changeUserType(2)">Moderator</button>' +
+					'<button type="button" class="btn btn-primary"  onclick="changeUserType(3)">Administrator</button>' +
+					'</div>';
+				}
+			}
+		}
+	});
+	
+	//promena tipa korisnika
+	function changeUserType(type){
+		var kor = document.getElementById("userForEdit").value;
+		if(kor.trim() == ""){
+			alert("Enter user!");
+			return false;
+		}
+		
+			
+		$.ajax({
+			url: '../WebProjekat/rest/korisnicka/promeniTip/' + kor + '/' + type,
+			type: "PUT",
+			success: function(data){
+				if(false){
+					alert("Entered user does not exist!");
+				}else{
+					alert("User type changed!");
+				}
+			}
+		});
+	}
+	
+	//obrisi entitet posle zalbe
+	function deleteDecision(index){
+		$.ajax({
+			url: '../WebProjekat/rest/zalbe/obrisiEntitet/' + index,
+			type: "DELETE",
+			success: function(data){
+				if(data==false){
+					alert("Unsuccessful operation.");
+				}else{
+					alert("Deleted!")
+				}
+				window.location.href = "../WebProjekat/Korisnicka.html";
+			}
+		});
+	}
+	
+	function warningDecision(index){
+		$.ajax({
+			url: '../WebProjekat/rest/zalbe/upozorenje/' + index,
+			type: "POST",
+			success: function(data){
+				if(data==false){
+					alert("Unsuccessful operation.");
+				}else{
+					alert("The autor has been warned!")
+				}
+				window.location.href = "../WebProjekat/Korisnicka.html";
+			}
+		});
+	}
+	
+	function rejectDecision(index){
+		$.ajax({
+			url: '../WebProjekat/rest/zalbe/odbijZalbu/' + index,
+			type: "POST",
+			success: function(data){
+				if(data==false){
+					alert("Unsuccessful operation.");
+				}else{
+					alert("Report rejected!")
+				}
+				window.location.href = "../WebProjekat/Korisnicka.html";
+			}
+		});
+	}
+	//lajkovane teme
+	$.ajax({
+		url: '../WebProjekat/rest/korisnicka/lajkovaneTeme',
+		success: function(data){
+			if(data==null){
+				window.location.href = "../WebProjekat/LogIn.html";
+			}else{
+				var b = document.getElementById("likedTopics");
+				for(i=0; i<data.length; i++){
+					b.innerHTML += '<a href="../WebProjekat/Tema.html?pf=' + data[i].podforum + '&name=' + data[i].naslov + '" class="list-group-item"><h4 class="list-group-item-heading">'
+							+ data[i].naslov + '</h4><p class="list-group-item-text">By '+ data[i].autor + ' in ' + data[i].podforum + '</p></a>';
+				}
+			}
+		}
+	});
+	
+	//dislajkovane teme
+	$.ajax({
+		url: '../WebProjekat/rest/korisnicka/dislajkovaneTeme',
+		success: function(data){
+			if(data==null){
+				window.location.href = "../WebProjekat/LogIn.html";
+			}else{
+				var b = document.getElementById("dislikedTopics");
+				for(i=0; i<data.length; i++){
+					b.innerHTML += '<a href="../WebProjekat/Tema.html?pf=' + data[i].podforum + '&name=' + data[i].naslov + '" class="list-group-item"><h4 class="list-group-item-heading">'
+							+ data[i].naslov + '</h4><p class="list-group-item-text">By '+ data[i].autor + ' in ' + data[i].podforum + '</p></a>';
+				}
+			}
+		}
+	});
+	</script>
+</body>
+</html>

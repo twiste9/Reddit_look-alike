@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="jquery-3.2.1.min.js"></script>
+        <script type="text/javascript" src="boot/bootstrap.js"></script>
+		<link rel="stylesheet" type="text/css" href="boot/bootstrap.css">
+	   <meta charset="ISO-8859-1">
+<title>Topic</title>
+</head>
+<body>
+	<nav class="navbar navbar-inverse">
+	  <div class="container-fluid">
+	    <div class="navbar-header" id="zaglavlje">
+			<a class="navbar-brand" href="../WebProjekat/Index.html"><span class="glyphicon glyphicon-home"></span> Home</a>
+	    </div>
+	    <div class="collapse navbar-collapse" id="myNavbar">
+	      <ul class="nav navbar-nav">
+	 
+	      </ul>
+	      <ul class="nav navbar-nav navbar-right">
+	      <li><form class="navbar-form" id="searchForm">
+				      <div class="form-group">
+				        <input id="searchText" type="text" class="form-control" placeholder="Search">
+				      </div>
+				      <button type="submit" class="btn btn-info"><span class="glyphicon glyphicon-search"></span></button>
+				   </form></li>
+	        <li><button class="btn btn-link" onClick="logClick()" id ="isLogged" style="height: 50px;"></button></li>
+	      </ul>
+	    </div>
+	  </div>
+	</nav>
+	<div class="container-fluid" id="SviPodforumi">
+        	<div class="col-sm-2">
+            	<div class="panel panel-primary">
+	        		<div class="panel-heading">Subforums</div>
+	        		<div class="panel-body">
+	            		<ul id="tabelaPodforumi"></ul>
+	            	</div>
+	            </div>
+            </div>
+            <div class="col-sm-8">
+				<div id="mainContent" style="border: 1px solid #ddd;"></div>
+				<div class="row" id="newComment" style="display: none;">
+					<form id="newCommentForm">
+					  <div class="form-group">
+					    <label>Comment:</label>
+					    <textarea  rows="5" form="newCommentForm" style="width: 100%;" id="newCommentText"></textarea>
+					  </div>
+					  <button type="submit" class="btn btn-default">Submit</button>
+					</form>
+				</div>
+				<div class="row" id="comments">
+					
+				</div>
+            </div>
+             <div class="col-sm-2"  id="desniDeo">
+             <button type="button" class="btn btn-link" id="reportTopic" style="display: none; margin-bottom: 5px; width: 100%;" data-toggle="collapse" data-target="#reportForm">Report</button>
+            		<div class="collapse row" id="reportForm"><label style="width: 100%;">Reason:</label>
+            		<textarea rows="4" cols="4" id="reportText" style="width: 100%;"></textarea>
+            		<button type="button" class="btn btn-default" onclick="sendReportClick()">Send report</button></div>
+            	</div>
+           
+        </div>
+        <script>
+      //da li je ulogovan ili ne
+    	var logged = 0;
+      	var tema = null;
+    	$.ajax({
+   				url: '../WebProjekat/rest/pocetna/isLogged',
+   	        	type: "GET",
+   	        	success: function(data){
+   	        		if(data==true){
+   	        			document.getElementById("desniDeo").innerHTML += '<div class="row"><button type="button" class="btn btn-primary" id="saveTopic" style=" margin-bottom: 5px; width: 100%;" onclick="saveTopicClick()"><span class="glyphicon glyphicon-floppy-disk"></span> Save</button></div>';
+   	        			document.getElementById("isLogged").innerHTML = "Log Out";
+   	        			document.getElementById("newComment").style.display = "initial";
+   	        			document.getElementById("reportTopic").style.display = "initial";
+   	        			logged = 1;
+   	        		}else{
+   	        			document.getElementById("isLogged").innerHTML = "Log In";
+   	        			logged = 0;
+   	        		}
+   	        	}
+   	    	});
+    	
+    	//zalba na temu
+    	function sendReportClick(){
+    		var tekstZalbe = document.getElementById("reportText").value;
+    		if(tekstZalbe.trim() == ""){
+    			alert("Please fill out your report!");
+    			return false;
+    		}
+    		
+    		if(tema == null){
+    			return false;
+    		}
+    		
+    		var zalba = new Object();
+    		zalba.tekst = tekstZalbe;
+    		zalba.podforum = tema.podforum;
+    		zalba.tema = tema.naslov;
+    		
+    		$.ajax({
+    			url: '../WebProjekat/rest/zalbe/temaZalba',
+    			type: "POST",
+    			data: JSON.stringify(zalba),
+    			contentType: "application/json",
+    			success: function(data){
+    				if(data == false){
+    					alert("Report not sent!");
+    				}else{
+    					alert("Report sent!");
+    				}
+    			}
+    		});
+    	}
+    	
+    	function logClick(){
+    		if(logged == 0){
+    			window.location.href="../WebProjekat/LogIn.html";
+    		}else{
+    			$.ajax({
+       				url: '../WebProjekat/rest/pocetna/logOut',
+       	        	type: "POST",
+       	        	success: function(data){
+       	        		window.location.href="../WebProjekat/Index.html";
+       	        	}
+    			});
+    		}
+    	}
+    	
+
+    	function saveTopicClick(){
+    		if(tema != null){
+	    		$.ajax({
+	   				url: '../WebProjekat/rest/podforum/tema/sacuvaj',
+	   	        	type: "POST",
+	   	        	data: JSON.stringify(tema),
+	   	        	contentType: "application/json",
+	   	        	success: function(data){
+						if(data==true){
+							alert("Topic saved!");
+						}
+	   	        	}
+	   	    	});
+    		}
+    	}
+    	
+    	//prikaz svih podforuma
+        $.ajax({
+           url: "../WebProjekat/rest/pocetna/sviPodforumi"
+           }).then(function(data){
+              var a = document.getElementById("tabelaPodforumi");
+              var i;
+             for(i=0; i<data.length; i++){
+                  a.innerHTML += '<li><a class="podforumTitle"' + 'href="../WebProjekat/Podforum.html?name=' + data[i].naziv + '">' + data[i].naziv + '</a><p class="opisPodforuma">' +
+                  data[i].opis + '</p></li>';
+            }
+        });
+    	//ako je korisnik moderator ili admin, prikazi dugme za novi podforum
+    	//ako je korisnik ulogovan prikazi dugme za novu temu
+    	/*$.ajax({
+				url: '../WebProjekat/rest/pocetna/userType',
+	        	
+		}).then(function(data){
+    		if(data==3 || data==2){
+    			document.getElementById('newSubforum').style.display = "initial";
+    		}else{
+    			document.getElementById('newSubforum').style.display = "none";
+    		}
+    		if(data==3 || data==2 || data==1){
+				document.getElementById('newTopic').style.display = "initial";
+			}else{
+				document.getElementById('newTopic').style.display = "none";
+			}
+	    });*/
+        
+    	
+    	//tema
+    	var pathname = window.location.href; 
+        var temp = pathname.split("=");
+        var temp1 = temp[1].split("&");
+        var p = temp1[0];
+        var t = temp[2];
+        function getTopics(){
+	        $.ajax({
+				url: '../WebProjekat/rest/podforum/tema/'+ p + '/' + t,
+	        	success: function(data){
+	        		if(data==null){
+	        			alert("This topic does not exist!");
+	        			window.location.href="../WebProjekat/Index.html";
+	        		}else{
+	        			tema = data;
+	        			var a = document.getElementById("mainContent");
+	        			a.innerHTML = '<div class="panel panel-danger"><div class="panel-heading" style="margin-bottom: 0px; padding-bottom:15px;">' + data.naslov + '<span style="float: right;"><button type="button"  class="btn btn-success btn-sm" onclick="like(\'' + data.podforum + '\',\'' + data.naslov +'\')"><span class="glyphicon glyphicon-thumbs-up"></span></button><span>' +
+	        			'<span id="likes" style="margin-left: 10px; margin-right: 10px;">' + (data.like - data.dislike) + '</span><span><button type="button" class="btn btn-danger btn-sm" onclick="dislike(\'' + data.podforum + '\',\'' + data.naslov +'\')"><span class="glyphicon glyphicon-thumbs-down"></span></button></span></div>';
+	        			if(data.tip === "slika"){
+	        				a.innerHTML += '<div><img src="' + data.sadrzaj + '" class="img-rounded" style="width: 100%;"/></div>';
+	        			}else if(data.tip === "link"){
+	        				a.innerHTML += '<div><a href="' + data.sadrzaj + '">' + data.sadrzaj + '</a></div>';
+	        			}else{
+	        				a.innerHTML += '<div><p>' + data.sadrzaj + '</p></div>';
+	        			}
+	        			a.innerHTML += '</div>';
+                    	generateComments(data.komentari, 0);
+	        		}
+	        	}
+	        });
+        }
+        
+        //komentari
+        function generateComments(comments, depth){
+        	var i;
+        	for(i=0; i<comments.length; i++){
+    			var d = document.getElementById("comments");
+    			if(comments[i].obrisan == true){
+    				d.innerHTML+='<div class="row well" style="margin-left:' + depth + 'px; background: #c6c6c6;"><h4>[DELETED]</h4><p>[DELETED]</p></div>';
+    			}else if(comments[i].izmenjen == true){
+    				d.innerHTML+='<div class="row well" style="margin-left:' + depth + 'px; background: #c6c6c6;"><h4>' + comments[i].autor + '</h4><p>[EDITED]' + comments[i].tekst + '</p>' +
+    				'<button type="button" class="btn btn-success btn-sm" onclick="likeComment(' + comments[i].id + ', ' + comments[i].roditelj +')"><span class="glyphicon glyphicon-thumbs-up"></span></button>' + 
+    				'<span style="margin-left: 10px; margin-right: 10px;" id="likeCount' + comments[i].id + '">' + (comments[i].like - comments[i].dislike) + '</span>' +
+    				'<button type="button" class="btn btn-danger btn-sm" onclick="dislikeComment(' + comments[i].id + ', ' + comments[i].roditelj +')"><span class="glyphicon glyphicon-thumbs-down"></span></button>' + 
+    				'<button type="button" class="btn btn-link" style="margin-left: 10px; margin-right: 10px;" onclick="saveComment(' + comments[i].id + ', ' + comments[i].roditelj +')">Save</button>' + 
+    				'<button type="button" class="btn btn-link" data-toggle="collapse" data-target="#commentReply' + comments[i].id + '">Reply</button>' + 
+    				'<button type="button" class="btn btn-link" style="margin-left: 10px; margin-right: 10px;" onclick="deleteComment(' + comments[i].id + ', ' + comments[i].roditelj +')">Delete</button>' +
+    				'<button type="button" class="btn btn-link" data-toggle="collapse" data-target="#commentReport' + comments[i].id + '">Report</button>' +
+    				'<button type="button" class="btn btn-link" data-toggle="collapse" data-target="#commentEdit' + comments[i].id + '">Edit</button></div>' +
+    				'<div class="collapse well" id="commentReply' + comments[i].id + '" ><p>Reply</p><div class="row"><textarea style="width: 100%;" id="commentReplyText' + comments[i].id + '"></textarea><button class="btn btn-primary btn-md" id="replyButton" onclick="replyClick(' + comments[i].id + ')">Reply</button></div></div>' + 
+    				'<div class="collapse well" id="commentEdit' + comments[i].id + '" ><p>Edit</p><div class="row"><textarea style="width: 100%;" id="commentEditText' + comments[i].id + '">' + comments[i].tekst + '</textarea><button class="btn btn-primary btn-md" id="editCommentButton" onclick="editCommentClick(' + comments[i].id + ', ' + comments[i].roditelj + ')">Edit</button>' + 
+    				'<div class="collapse well" id="commentReport' + comments[i].id + '" ><p>Report</p><div class="row"><textarea style="width: 100%;" id="commentReportText' + comments[i].id + '"></textarea><button class="btn btn-primary btn-md" id="reportCommentButton" onclick="reportCommentClick(' + comments[i].id + ')">Send report</button></div></div>' + 
+    				'</div></div>';
+    			}else{
+    				d.innerHTML+='<div class="row well" style="margin-left:' + depth + 'px; background: #c6c6c6;"><h4>' + comments[i].autor + '</h4><p>' + comments[i].tekst + '</p>' +
+    				'<button type="button" class="btn btn-success btn-sm" onclick="likeComment(' + comments[i].id + ', ' + comments[i].roditelj + ')"><span class="glyphicon glyphicon-thumbs-up"></span></button>' + 
+    				'<span style="margin-left: 10px; margin-right: 10px;" id="likeCount' + comments[i].id + '">' + (comments[i].like - comments[i].dislike) + '</span>' +
+    				'<button type="button" class="btn btn-danger btn-sm" onclick="dislikeComment(' + comments[i].id + ', ' + comments[i].roditelj +')"><span class="glyphicon glyphicon-thumbs-down"></span></button>' + 
+    				'<button type="button" class="btn btn-link" style="margin-left: 10px; margin-right: 10px;" onclick="saveComment(' + comments[i].id + ', ' + comments[i].roditelj +')">Save</button>' + 
+    				'<button type="button" class="btn btn-link" type="button" class="btn btn-link" data-toggle="collapse" data-target="#commentReply' + comments[i].id + '">Reply</button>' + 
+    				'<button type="button" class="btn btn-link" style="margin-left: 10px; margin-right: 10px;" onclick="deleteComment(' + comments[i].id + ', ' + comments[i].roditelj +')">Delete</button>' +
+    				'<button type="button" class="btn btn-link" data-toggle="collapse" data-target="#commentReport' + comments[i].id + '">Report</button>'+
+    				'<button type="button" class="btn btn-link" data-toggle="collapse" data-target="#commentEdit' + comments[i].id + '">Edit</button></div>' +
+    				'<div class="collapse well" id="commentReply' + comments[i].id + '"><div class="row"><textarea style="width: 100%;" id="commentReplyText' + comments[i].id + '"></textarea><button class="btn btn-primary btn-md" id="replyButton" onclick="replyClick(' + comments[i].id + ')">Reply</button></div></div>' + 
+    				'<div class="collapse well" id="commentEdit' + comments[i].id + '" ><p>Edit</p><div class="row"><textarea style="width: 100%;" id="commentEditText' + comments[i].id + '">' + comments[i].tekst + '</textarea><button class="btn btn-primary btn-md" id="editCommentButton" onclick="editCommentClick(' + comments[i].id + ', ' + comments[i].roditelj + ')">Edit</button></div></div>' + 
+    				'<div class="collapse well" id="commentReport' + comments[i].id + '" ><p>Report</p><div class="row"><textarea style="width: 100%;" id="commentReportText' + comments[i].id + '"></textarea><button class="btn btn-primary btn-md" id="reportCommentButton" onclick="reportCommentClick(' + comments[i].id + ')">Send report</button></div></div>' + 
+					'</div>'; 
+    			}
+    			if(comments[i].podkomentari.length > 0){
+    				generateComments(comments[i].podkomentari, depth + 20);
+    			}
+        		
+        	}
+        }
+        
+        //report komentar
+        function reportCommentClick(id){
+        	var zalbaText = document.getElementById("commentReportText" + id).value;
+        	if(zalbaText.trim() == "")
+        		return false;
+
+        	if(tema == null)
+        		return false;
+        	
+        	var zalba = new Object();
+    		zalba.tekst = zalbaText;
+    		zalba.podforum = tema.podforum;
+    		zalba.tema = tema.naslov;
+    		zalba.komentar = id;
+    		
+    		$.ajax({
+    			url: '../WebProjekat/rest/zalbe/komentarZalba',
+    			type: "POST",
+    			data: JSON.stringify(zalba),
+    			contentType: "application/json",
+    			success: function(data){
+    				if(data == false){
+    					alert("Report not sent!");
+    				}else{
+    					alert("Report sent!");
+    				}
+    			}
+    		});
+        }
+        
+        //like komentar
+        function likeComment(id, parent){
+        	$.ajax({
+        		url: '../WebProjekat/rest/komentari/like/' + p + '/' + t + '/' + id + '/' + parent,
+        		type: "PUT",
+        		success: function(data){
+        			if(data!=-20000){
+        				document.getElementById("likeCount" + id).innerHTML = data;
+        			}
+        		}
+        	});
+        }
+      //dislike komentar
+        function dislikeComment(id, parent){
+        	$.ajax({
+        		url: '../WebProjekat/rest/komentari/dislike/' + p + '/' + t + '/' + id + '/' + parent,
+        		type: "PUT",
+        		success: function(data){
+        			if(data!=-20000){
+        				document.getElementById("likeCount" + id).innerHTML = data;
+        			}
+        		}
+        	});
+        }
+        
+      //sacuvaj kom
+      	function saveComment(id, parent){
+      		$.ajax({
+        		url: '../WebProjekat/rest/komentari/sacuvaj/' + p + '/' + t + '/' + id + '/' + parent,
+        		type: "POST",
+        		success: function(data){
+        			if(data==true){
+        				alert("Comment saved!");
+        			}
+        		}
+        	});
+      	}
+      
+      //obrisi komentar
+      function deleteComment(id, parent){
+    	  $.ajax({
+      		url: '../WebProjekat/rest/komentari/obrisi/' + p + '/' + t + '/' + id + '/' + parent,
+      		type: "DELETE",
+      		success: function(data){
+      			if(data==false){
+      				alert("You are not allowed to delete this comment!");
+      			}else{
+      				alert("Comment deleted!");
+					location.reload();
+      			}
+      		}
+      	});
+      }
+      
+      //izmeni komentar
+      function editCommentClick(id, parent){
+    	  var tekst = document.getElementById("commentEditText" + id).value;
+    	  if(tekst.trim() == ""){
+    		  alert("You have not entered any text!");
+    		  return false;
+    	  }
+    	  var izmenjenKomentar = new Object();
+    	  izmenjenKomentar.tekst = tekst;
+    	  izmenjenKomentar.podforum = tema.podforum;
+    	  izmenjenKomentar.tema = tema.naslov;
+    	  izmenjenKomentar.roditelj = parent;
+    	  izmenjenKomentar.id = id;
+    	  
+    	  $.ajax({
+    		  url: '../WebProjekat/rest/komentari/izmeni',
+        		type: "PUT",
+        		data: JSON.stringify(izmenjenKomentar),
+        		contentType: "application/json",
+        		success: function(data){
+        			if(data==false){
+        				alert("You are not allowed to edit this comment!");
+        			}else{
+        				alert("Comment edited!");
+  						location.reload();
+        			}
+        		}
+    	  });
+      }
+      
+        //odgovor na komentar
+        function replyClick(id){
+        	var odgovor = document.getElementById("commentReplyText" + id).value;
+        	if(odgovor.trim() == ""){
+        		alert("Please enter a comment in the text field");
+        		return false;
+        	}
+        	
+        	var podkomentar = new Object();
+        	podkomentar.tekst = odgovor;
+        	podkomentar.tema = tema.naslov;
+        	podkomentar.podforum = tema.podforum;
+        	podkomentar.roditelj = id;
+        	
+        	$.ajax({
+        		url: '../WebProjekat/rest/komentari/noviPodkomentar',
+        		type: "POST",
+        		data: JSON.stringify(podkomentar),
+        		contentType: "application/json",
+        		success: function(data){
+        			if(data==-1){
+        				alert("Please sign in if you want to comment this topic");
+        			}else if(data==0){
+        				alert("Please enter a comment in the text field");
+        			}else{
+        				alert("Comment reply successfully posted!");
+        				var w = window.location.href;
+        				window.location.href = w;
+        			}
+        		}
+        	});
+        }
+        
+        
+      //lajk na temu
+    	function like(pf, tema){
+    		
+    		var t = new Object();
+    		t.naslov = tema;
+    		t.podforum = pf;
+    		
+    		$.ajax({
+   				url: '../WebProjekat/rest/pocetna/upvote',
+   	        	type: "POST",
+   	        	data: JSON.stringify(t),
+   	        	contentType: "application/json",
+   	        	success: function(data){
+					document.getElementById("likes").innerHTML = data;
+   	        			}
+   	    	});
+    	}
+      
+    	//dislajk na temu
+    	function dislike(pf, tema){
+    		
+    		var t = new Object();
+    		t.naslov = tema;
+    		t.podforum = pf;
+    		
+    		$.ajax({
+   				url: '../WebProjekat/rest/pocetna/downvote',
+   	        	type: "POST",
+   	        	data: JSON.stringify(t),
+   	        	contentType: "application/json",
+   	        	success: function(data){
+					document.getElementById("likes").innerHTML = data;
+   	        			}
+   	    	});
+    	}
+        
+        //dugmad za izmenu i brisanje teme, mogu samo admin, autor i modovi tog podforuma
+        $.when(getTopics()).then(function(){
+		        $.ajax({
+	   				url: '../WebProjekat/rest/podforum/tema/smeEditovati/' + p + '/' + t,
+	   	        	success: function(data){
+	   	        		if(data==true){
+	   	        			document.getElementById("desniDeo").innerHTML+='<div class="row"><button type="button" class="btn btn-warning" id="editTopic" style="margin-bottom: 5px; width: 100%;" onclick="editTopicClick()"><span class="glyphicon glyphicon-edit"></span> Edit</button></div>' + 
+	   	        			'<form id="editForm" style="display: none;"><div class="form-group"><label for="name">Title:</label>' + 
+	      					'<input type="text" class="form-control" id="editedName" value="' + tema.naslov + '"></div>' + 
+	      					'<div class="form-group"><label for="type">Type:</label>' + 
+	      					'<select id="types" class="form-group" onchange="promenaTipa()" style="width: 100%;">' +
+	                          '<option disabled selected></option>' +
+	                          '<option value="picture">Picture</option>' +
+	                          '<option value="link">Link</option>' +
+	                          '<option value="text">Text</option>' +
+	                        '</select></div>' +
+	                        '<div class="form-group" id="editedContent"></div><button type="submit" class="btn btn-default" style="margin-bottom: 10px;">Confirm changes</button></form>' +
+	   	        			'<div class="row"><button type="button" class="btn btn-danger" id="DeleteTopic" style="margin-bottom: 5px; width: 100%;" onclick="deleteTopicClick()"><span class="glyphicon glyphicon-trash"></span> Delete</button></div>';
+	   	        		}
+	   	        	}
+		        });
+	        }
+        );
+        
+        function editTopicClick(){
+        	if(document.getElementById("editForm").style.display === "none"){
+        		document.getElementById("editForm").style.display = "initial";
+        	}else{
+        		document.getElementById("editForm").style.display = "none";
+        	}
+        }
+        
+        var tipTeme = "nista";
+        function promenaTipa(){
+        	var tip = $("#types option:selected").text();
+     	   if(tip==="Picture"){
+     		   document.getElementById("editedContent").innerHTML = '<label>Picture:</label>';
+     		   document.getElementById("editedContent").innerHTML += "<input type=\"file\" accept=\"image/\*\" id=\"iconPath\">";
+     		   tipTeme = "slika";
+     	   }else if(tip==="Text"){
+     		   document.getElementById("editedContent").innerHTML = '<label>Text:</label>';
+     		   document.getElementById("editedContent").innerHTML += "<input type=\"text\" class=\"form-control\" id=\"text\" style=\"width: 100%;\">";
+     		   tipTeme = "text";
+     	   }else{
+     		   document.getElementById("editedContent").innerHTML = '<label>Link:</label>';
+     		   document.getElementById("editedContent").innerHTML += "<input type=\"text\" class=\"form-control\" id=\"text\" style=\"width: 100%;\">";
+     		   tipTeme = "link";
+     	   }
+        }
+        
+      //kad klikne potvrdu izmene teme
+        $(document).on('submit', '#editForm', function(e) {
+		e.preventDefault();
+            var name=document.getElementById("editedName").value;
+            //var iconPath=document.getElementById("iconPath").value;
+            var sadrzaj;
+
+        	 if(tipTeme==="nista"){
+        		 alert("You have not selected a type.");
+        		 return false;
+        	 }else if(tipTeme==="slika"){
+                   var objFile = $('#iconPath');
+             	 	if(objFile[0].files[0]==null ){
+              			alert("Choose an icon");
+              			return false;
+              	 	}else{
+              	 		sadrzaj=objFile[0].files[0].name;
+              	 	}
+             }else{
+            	 var text=document.getElementById("text").value;
+            	 if(text.trim()==""){
+            		 alert("You have not entered a link/text");
+            		 return false;
+            	 }else{
+            		 sadrzaj = text;
+            	 }
+             }
+        	 
+        	 if(name.trim()==""){
+   				alert("You have not entered a title");
+ 		        return false;
+	 	     }
+        	 
+        	 if(tema!=null){
+	        	 //objekat izmenjene teme
+	        	 var izmenjenaTema = new Object();
+	        	 izmenjenaTema.naslov = name;
+	        	 izmenjenaTema.sadrzaj = sadrzaj;
+	        	 izmenjenaTema.tip = tipTeme;
+	        	 izmenjenaTema.podforum = tema.podforum;
+	        	 
+	        	 $.ajax({
+	           		url: '../WebProjekat/rest/podforum/tema/izmeni/' + p + '/' + t,
+	           	    type: "PUT",
+	           	 	data: JSON.stringify(izmenjenaTema),
+	  	        	contentType: "application/json",
+	           	    success: function(data){
+	           	    	if(data==1){
+              	    		alert("Please enter all fields.");
+	           	    	}else if(data==2){
+	           	    		if(izmenjenaTema.tip==="slika"){
+	           	    			var objFile = $('#iconPath');
+	           	    			var file = objFile[0].files[0];
+	           	    			$.ajax({
+	                   	  			async : false,
+	                   	  			type : "POST",
+	                   	  			url : "../WebProjekat/rest/podforum/tema/dodajSliku/" + izmenjenaTema.podforum + '/' + izmenjenaTema.naslov,
+	                   	  	        contentType : "multipart/form-data",
+	                   	  	        data: file,
+	                   	  	        processData: false,
+	                   	  		});
+	           	    		}
+	           	    		alert("You have successfully edited this topic.");
+	           	    		window.location.href="../WebProjekat/Tema.html?pf=" + izmenjenaTema.podforum + "&name=" + izmenjenaTema.naslov;
+	           	   		}else if(data==3){
+	           	   			alert("Topic title already exists");
+	           	   		}else{
+	           	   			alert("Failed to edit topic!");
+	           	   		}
+	           	    }
+	        	 });
+        	 }
+        	 
+        });
+        function deleteTopicClick(){
+        	if(tema != null){
+	    		$.ajax({
+	   				url: '../WebProjekat/rest/podforum/tema/obrisi',
+	   	        	type: "DELETE",
+	   	        	data: JSON.stringify(tema),
+	   	        	contentType: "application/json",
+	   	        	success: function(data){
+						if(data==true){
+							alert("Topic deleted!");
+							window.location.href="../WebProjekat/Podforum.html?name=" + tema.podforum;
+						}
+	   	        	}
+	   	    	});
+    		}
+        }
+        
+        //forma za novi komentar
+        $(document).on('submit', '#newCommentForm', function(e) {
+        	e.preventDefault();
+        	var text = document.getElementById("newCommentText").value;
+        	if(text.trim() == ""){
+        		return false;
+        	}
+        	
+        	var komentar = new Object();
+        	komentar.tekst = text;
+        	komentar.tema = tema.naslov;
+        	komentar.podforum = tema.podforum;
+        	
+        	$.ajax({
+        		url: '../WebProjekat/rest/komentari/noviKomentar',
+        		type: "POST",
+        		data: JSON.stringify(komentar),
+        		contentType: "application/json",
+        		success: function(data){
+        			if(data==false){
+        				alert("Failed to post comment");
+        			}else{
+        				alert("Comment successfully posted!");
+        				var w = window.location.href;
+        				window.location.href = w;
+        			}
+        		}
+        	});
+        });
+      //search
+    	$(document).on('submit', '#searchForm', function(e) {
+    		e.preventDefault();
+    		var text = document.getElementById("searchText").value;
+    		if(text.trim()==""){
+    			alert("Please enter some text in the search box!");
+    			return false;
+    		}else{
+    			window.location.href = '../WebProjekat/Pretraga.html?text=' + text;
+    		}
+    		
+    	});
+        </script>
+</body>
+</html>

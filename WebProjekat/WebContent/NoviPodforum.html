@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script src="jquery-3.2.1.min.js"></script>
+	<meta charset="ISO-8859-1">
+	<script type="text/javascript" src="boot/bootstrap.js"></script>
+	<link rel="stylesheet" type="text/css" href="boot/bootstrap.css">
+	<title>Create new Subforum</title>
+</head>
+    <body>
+    	<script>
+    	$.ajax({
+				url: '../WebProjekat/rest/pocetna/userType',
+	        	
+		}).then(function(data){
+	        if(data==0 || data==1){
+	        	window.location.href="../WebProjekat/Index.html"
+	        }
+	    });
+    	
+    	</script>
+          <nav class="navbar navbar-inverse">
+		  <div class="container-fluid">
+		    <div class="navbar-header">
+		    	<a class="navbar-brand" href="../WebProjekat/Index.html"><span class="glyphicon glyphicon-home"></span> Home</a>
+		    </div>
+		    <div class="collapse navbar-collapse" id="myNavbar">
+		      <ul class="nav navbar-nav">
+		 
+		      </ul>
+		      <ul class="nav navbar-nav navbar-right">
+		        <li><button class="btn btn-link" onClick="signOutClick()" style="height: 50px;">Log Out</button></li>
+		      </ul>
+		    </div>
+		  </div>
+		</nav>
+		<div class="row">
+ 			<div class="col-sm-4"></div>
+  			<div class="col-sm-4">
+  				<h2>Create New Subforum</h2>
+  			</div>
+	 	<div class="col-sm-4"></div>
+		</div>
+        <div class="row">
+  			<div class="col-sm-4"></div>
+
+        	<div class="container col-sm-4">
+         	   <form id="form" >
+                <table class="table table-hover" style="width: 450px;">
+                    <tr><td>Title:</td><td ><input type="text" class="forma" id="name" style="width: 255px;"/></td><td></td></tr>
+                    <tr><td>About:</td><td><textarea  rows="5" form="form" style="width: 255px;" id="about"></textarea></td><td></td></tr>
+                    <tr><td>Rules:</td><td><textarea  rows="5" form="form" style="width: 255px;" id="rules"></textarea></td><td></td></tr>
+                    <tr><td>Choose icon:</td><td><input type="file" accept="image/*" id="iconPath"></td><td></td></tr>
+                    <tr><td>Add mods:</td><td><input type="text" class="forma" id="mods"   style="width: 255px;"/></td><td style="width: 50px;"><button type="button" class="btn btn-success" onclick="addModClick()">Add</button></td></tr>
+                    <tr><td></td><td><input type="submit" class="btn btn-primary btn-md" value="Create" id="createButton"   style="width: 255px;"></td><td></td></tr>
+                </table>
+            </form>
+        	</div>	
+        	<div class="col-sm-4"></div>
+        </div>
+        
+        
+        	<script>
+
+           	   //dodavanje moderatora za podforum
+        	   var moderatori = [];
+               function addModClick(){
+               	var mod=document.getElementById("mods").value;
+               	console.log(mod);
+               	if(mod.trim()==""){
+               		alert("You have not entered a username");
+               		return false;
+               	}
+               	//provera da li postoji zadatati korisnik
+               	$.ajax({
+          				url: '../WebProjekat/rest/noviPodforum/userExists/' + mod,
+          	        	type: "GET",
+          	        	success: function(data){
+   						if(data==true){
+   							moderatori.push(mod);
+   							document.getElementById("mods").value = '';
+   						}else{
+   							alert("Entered user does not exist");
+   						}
+          	        	}
+          	    	});
+               }
+        	
+               //log out
+               function signOutClick(){
+               		$.ajax({
+               		url: '../WebProjekat/rest/pocetna/logOut',
+               	    type: "POST",
+               	    success: function(data){
+               	    	window.location.href="../WebProjekat/Index.html";
+               	    	}
+            		});
+            	}
+                   
+                //kad klikne kreiraj podforum
+                $(document).on('submit', '#form', function(e) {
+        		e.preventDefault();
+                    var name=document.getElementById("name").value;
+			   		var about=document.getElementById("about").value;
+			     	var rules=document.getElementById("rules").value;
+                    //var iconPath=document.getElementById("iconPath").value;
+
+                    var objFile = $('#iconPath');
+                	 if(objFile[0].files[0]==null ){
+                		alert("Choose an icon");
+                		return false;
+                	 }
+                    if(name.trim()=="" || about.trim()=="" || rules.trim()==""){
+	       				alert("You have not entered all fields.");
+   		 		        return false;
+      		 	     }
+                       
+                    var file = objFile[0].files[0];
+                    name = name.replace( /\s/g, "");
+                       
+                     //kreiraj podforum
+                       var podforum = new Object();
+                       podforum.naziv = name;
+                       podforum.opis = about;
+                       podforum.spisakpravila = rules;
+                       podforum.ikonica = file.name;
+                       podforum.moderatori = moderatori;
+                       
+                       $.ajax({
+                      		url: '../WebProjekat/rest/noviPodforum/dodaj',
+                      	    type: "POST",
+                      	 	data: JSON.stringify(podforum),
+             	        	contentType: "application/json",
+                      	    success: function(data){
+                      	    	if(data==0){
+                      	    		alert("You have not entered all fields.")
+                      	    	}else if(data==1){
+                      	    		alert("Entered name already exists.");
+                      	    	}else{
+                      	    		$.ajax({
+	                      	  			async : false,
+	                      	  			type : "POST",
+	                      	  			url : "../WebProjekat/rest/noviPodforum/dodajIkonicu/" + name,
+	                      	  	        contentType : "multipart/form-data",
+	                      	  	        data: file,
+	                      	  	        processData: false,
+	                      	  		});
+                      	    		alert("You have successfully created a new subforum.");
+                          	    	window.location.href="../WebProjekat/Podforum.html?name=" + name;
+                      	    	}
+                      	    }
+                   		});
+                   });
+                    
+                    
+                   /* 
+                    //kad pokusa submit
+                    $(document).on('submit', '#form', function(e) {
+				        e.preventDefault();
+                        var name=document.getElementById("name").value;
+				        var about=document.getElementById("about").value;
+				        var rules=document.getElementById("rules").value;
+                        var iconPath=document.getElementById("iconPath").value;
+				
+                        if(name.trim()=="" || about.trim()=="" || rules.trim()=="" || iconPath.trim()==""){
+					       alert("You have not entered all fields.");
+       		 		        return false;
+       		 	         }
+                        
+                        //kreiraj podforum
+                        var podforum = new Object();
+                        podforum.naziv = name;
+                        podforum.opis = about;
+                        podforum.spisakPravila = rules;
+                        podforum.ikonica = iconPath;
+                        
+                        $.ajax({
+	       				url: 'http://localhost:8080/App/App/addSubreddit',
+	       	        	type: "POST",
+	       	        	data: JSON.stringify(podforum),
+	       	        	contentType: "application/json",
+	       	        	success: function(data){
+	       	   		  				if(data != false){
+					       	   		  	window.location.href="http://localhost:8080/App/App/index.html";
+			       	   		  		}else{
+					       				alert('Subreddit already exists!');
+					       			}
+	       	        			}
+	       	    	});
+                        
+                    });
+                    
+                    
+                	$.ajax({
+                        url: "http://localhost:8080/App/App/LoggedUser"
+                    }).then(function(data) {
+                    	if(data != ""){
+                    		document.getElementsByClassName('topMenu')[0].innerHTML = '<div class="topMenuChilds"><a href="http://localhost:8080/App/App/userPage.html">' + data.username + ' </a></div>' +
+                            '<div class="topMenuChilds"> or <button  id="signOut" onclick="signOutClick()">Sign Out</button></div>';
+                      
+                            
+                    	}else{
+                            window.location.href="http://localhost:8080/App/App/LogIn.html";
+                    	}
+                    });
+                });
+                //---------------------------------------------------
+                */
+	       </script>
+        
+        
+        
+    </body>
+</html>

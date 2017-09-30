@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script src="jquery-3.2.1.min.js"></script>
+    <script type="text/javascript" src="boot/bootstrap.js"></script>
+	<link rel="stylesheet" type="text/css" href="boot/bootstrap.css">
+   	<meta charset="ISO-8859-1">
+	<title>User registration</title>
+</head>
+<body>
+	<script>
+    	$.ajax({
+				url: '../WebProjekat/rest/pocetna/userType',
+	        	
+		}).then(function(data){
+	        if(data!=0){
+	        	window.location.href="../WebProjekat/Index.html"
+	        }
+	    });
+    </script>
+    <nav class="navbar navbar-inverse">
+	  <div class="container-fluid">
+	    <div class="navbar-header">
+	    	<a class="navbar-brand" href="../WebProjekat/Index.html"><span class="glyphicon glyphicon-home"></span> Home</a>
+	    </div>
+	    <div class="collapse navbar-collapse" id="myNavbar">
+	      <ul class="nav navbar-nav">
+	 			
+	      </ul>
+	      <ul class="nav navbar-nav navbar-right">
+	      </ul>
+	    </div>
+	  </div>
+	</nav>
+	<div class="row">
+	  <div class="col-sm-3"></div>
+	  <div class="col-sm-6">
+	  	<h2>Register</h2>
+	  </div>
+	  <div class="col-sm-3"></div>
+	</div>
+	<div class="row">
+	  <div class="col-sm-3"></div>
+	  <div class="col-sm-6">
+		<form class="form-horizontal" id="form">
+			<div class="form-group">
+		      <label class="control-label col-sm-2" >First Name:</label>
+		      <div class="col-sm-10">
+		        <input type="text" class="form-control" id="name" placeholder="Enter first name">
+		      </div>
+    		</div>
+    		<div class="form-group">
+		      <label class="control-label col-sm-2" >Last Name:</label>
+		      <div class="col-sm-10">
+		        <input type="text" class="form-control" id="surname" placeholder="Enter last name">
+		      </div>
+    		</div>
+    		<div class="form-group">
+		      <label class="control-label col-sm-2" >Username:</label>
+		      <div class="col-sm-10">
+		        <input type="text" class="form-control" id="username" placeholder="Enter username">
+		      </div>
+    		</div>
+    		<div class="form-group">
+		      <label class="control-label col-sm-2" >Password:</label>
+		      <div class="col-sm-10">
+		        <input type="password" class="form-control" id="password" placeholder="Enter password">
+		      </div>
+    		</div>
+    		<div class="form-group">
+		      <label class="control-label col-sm-2" >Phone:</label>
+		      <div class="col-sm-10">
+		        <input type="text" class="form-control" id="phone" placeholder="Enter phone number">
+		      </div>
+    		</div>
+    		<div class="form-group">
+		      <label class="control-label col-sm-2" >Email:</label>
+		      <div class="col-sm-10">
+		        <input type="text" class="form-control" id="email" placeholder="example@something.com">
+		      </div>
+    		</div>
+    		<div class="form-group" style="width: 100%;">
+		      <input type="submit" class="btn btn-primary" value="Register" id="register" style="width: 100%;">
+    		</div>
+		</form>
+	  </div>
+	  <div class="col-sm-3"></div>
+	</div>
+	<!-- <form id="form">
+		<table id="registrationtable">
+			<tr><td>First Name: </td> <td><input type="text" id="name"/></td></tr>
+			<tr><td>Last Name: </td> <td><input type="text" id="surname"/></td></tr>
+			<tr><td>Username: </td> <td><input type="text" id="username"/></td></tr>
+			<tr><td>Password: </td> <td><input type="password" id="password"/></td></tr>
+			<tr><td>Phone: </td> <td><input type="text" id="phone"/></td></tr>
+			<tr><td>Email: </td> <td><input type="text" id="email" value="e.g. name@example.com"/></td></tr>
+			<tr><td colspan="2" align="center"><input type="submit" class="btn btn-primary" value="Register" id="register"></td></tr>
+		</table>
+	</form>-->
+	
+	
+	<script>
+		$(document).ready(function(){
+			$(document).on('submit', '#form', function(e) {
+				e.preventDefault();
+				var name=document.getElementById("name").value;
+				var surname=document.getElementById("surname").value;
+				var username=document.getElementById("username").value;
+				var password=document.getElementById("password").value;
+				var phone=document.getElementById("phone").value;
+				var email=document.getElementById("email").value;
+				if(name.trim()=="" || surname.trim()=="" || username.trim()=="" 
+						|| password.trim()=="" || phone.trim()=="" || email.trim()==""){
+					alert("You have not entered all fields.");
+       		 		return false;
+       		 	}
+				if(email.search("@")==-1 || email.search(".")==-1){
+					alert("Email was not entered correctly.");
+					return false;
+				}
+				if(isNaN(phone)){
+					alert("Phone number was not entered correctly.");
+					return false;
+				}
+					
+					var user=new Object();
+					user.ime=name;
+					user.prezime=surname;
+					user.korisnicko=username;
+					user.lozinka=password;
+					user.telefon=phone;
+					user.email=email;
+					$.ajax({
+	       				url: "../WebProjekat/rest/register/reg",
+	       	        	type: "POST",
+	       	        	data: JSON.stringify(user),
+	       	        	contentType: "application/json",
+	       	        	success: function(data){
+	       	   		  				if(data == true){
+					       				window.location.href="../WebProjekat/LogIn.html";
+					       			}else{
+					       				alert('Username already exists!');
+					       			}
+	       	        			}
+	       	    	});
+				
+    		});
+		});
+	</script>
+</body>
+</html>
